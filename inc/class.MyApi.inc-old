@@ -1,0 +1,253 @@
+<?php
+class MyApi extends Api
+{
+    protected $User;
+    
+    protected $log;
+    
+    protected $db;
+    
+    
+
+    public function __construct($request, $origin, $log, $db) {
+        parent::__construct($request);
+
+        $this->log=$log;
+        
+        $this->db=$db;
+
+        $ll=print_r($request,true);
+        $this->log->logDebug("Request: ".$ll);
+    }
+
+    protected function logout(){
+        $this->log->logDebug("Logout");
+        
+        
+    }
+     
+     protected function adaugare(){
+        $this->log->logDebug("Adaugare user ");
+        $req=json_decode($this->file,true);
+        $lipsa = "";
+        try{
+            if (!isset($req['cmj']))
+                {
+                    $lipsa .= "CMJ ";
+                }
+            else
+                {
+                    $cmj = $req['cmj'];
+                }
+            $nume = $req['nume'];
+            $initiala = $req['initiala'];
+            $prenume = $req['prenume'];
+            $anterior = $req['anterior'];
+            $data_nasterii = $req['data_nasterii'];
+            $loc_nastere = $req['loc_nastere'];
+            $cnp = $req['cnp'];
+            $adresa = $req['adresa'];
+            $tip_act = $req['tip_act'];
+            $serie_act = $req['serie_act'];
+            $nr_act = $req['nr_act'];
+            $telefon = $req['telefon'];
+        }
+        catch (Exception $e){
+            $data = array('result'=>'ERR', 'eroare'=>'Date insuficiente');
+            return ($data);
+        }
+        
+        $actiune=print_r($req,true);
+        $this->log->logDebug("Date user: ".$actiune);
+        
+        $result=array('result'=>'OK', 'response'=>'Adaugare cu succes');
+        return($result);
+     }
+     
+     
+     protected function test(){
+        
+        
+        $req=json_decode($this->file,true);
+        $jwt=$req['token'];
+        //$this->log->logDebug("Token JWT ".$jwt);
+        $secretKey = 'IUYFGIUTJUgiyutriugjhgf';
+        $token = JWT::decode($jwt, $secretKey, array('HS512'));
+        $token = get_object_vars($token);
+        $payload = get_object_vars($token['data']);
+        $actiune=print_r($payload,true);
+        $this->log->logDebug("Actiune ".$actiune);
+        
+        
+        $tokenId    = base64_encode(mcrypt_create_iv(32));
+        $issuedAt   = time();
+        $serverName = "Foaie verde"; // Retrieve the server name from config file
+        $data = [
+        'iat'  => $issuedAt,                        // Issued at: time when the token was generated
+        'jti'  => $tokenId,                         // Json Token Id: an unique identifier for the token
+        'iss'  => $serverName,                      // Issuer
+        //'nbf'  => $notBefore,                     // Not before
+        //'exp'  => $expire,                        // Expire
+        'data' => [                                 // Data related to the signer user
+            'result'   => 'OK',
+            'userId'   => '1',                      // userid from the users table
+            'userName' => 'Dusmanul poporului',     // User name
+            'parola'   => 'parolemea',
+            'codMedic' => '1233445546536546546',
+            'adresa'   => 'str. Sapientei nr. 20 Bucuresti, Romania',
+            'studii'   => 'Univ. Craiova, facultatea de silvicultura',
+            ]
+        ];
+        
+        $jwt = JWT::encode(
+        $data,      //Data to be encoded in the JWT
+        $secretKey, // The signing key
+        'HS512'     // Algorithm used to sign the token, see https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40#section-3
+        );
+
+        $data = array('token'=>$jwt);
+        
+        return $data;
+        
+     }
+     
+     
+     protected function acces(){
+        $req=json_decode($this->file,true);
+        $token=$req['token'];
+        $actiune=$req['actiune'];
+        $this->log->logDebug("Actiune ".$actiune);
+        
+        $stmt=$this->db->prepare("select data_start from token where token=?");
+        try{
+            $stmt->execute(array($token));
+        }
+        catch (PDOException $e)
+        {
+            $result=array('result'=>'ERR', 'eroare'=>'Err DB'.$e->errorInfo());
+            return($result);
+        }
+        $row=$stmt->fetch();
+        if ($stmt->rowCount()>0)
+        {
+            $now=time();
+            $timestamp=strtotime($row['data_start']);
+            $this->log->logDebug("Acum: ".$now." - Data start in BD: ".$timestamp);
+            
+            if (( $now - $timestamp < 0 ) || ( $now - $timestamp > 3600 ))
+                {
+                    $result=array('result'=>'ERR', 'eroare'=>'Token invalid');
+                }
+            else
+                {
+                    $result=array('result'=>'OK', 'response'=>'Token valid');
+                }
+        }
+        else
+            $result=array('result'=>'ERR', 'eroare'=>'Token invalid');
+        return($result);
+     }
+     
+     /**
+      *     Auth
+      *     primeste json cu e-mail, cmj si pasword 
+      *     returneaza json cu token-ul daca autentificarea a reusit,
+      *     sau eroare daca a aparut vreo eroare la accesul la baza de date
+      *     sau autentificarea a esuat.
+      */
+     
+     protected function jwtenc($cod,$mesaj,$suplimentar = NULL)
+     {
+        require_once('class.JWT.inc');
+        require_once('class.BeforeValidException.inc');
+        require_once('class.ExpiredException.inc');
+        require_once('class.SignatureInvalidException.inc');
+        $tokenId    = base64_encode(mcrypt_create_iv(32));
+        $issuedAt   = time();
+        $secretKey = 'IUYFGIUTJUgiyutriugjhgf';
+        $serverName = 'work.login.ro';
+        $data = [
+                'iat'  => $issuedAt,                        // Issued at: time when the token was generated
+                'jti'  => $tokenId,                         // Json Token Id: an unique identifier for the token
+                'iss'  => $serverName,                      // Issuer
+                //'nbf'  => $notBefore,                     // Not before
+                //'exp'  => $expire,                        // Expire
+                'data' => [                                 // Data related to the signer user
+                    'result'   => $cod,
+                    'mesaj'    => $mesaj,
+                    'token'    => $suplimentar,
+                    ]
+                ];
+        
+        $jwt = JWT::encode(
+            $data,      //Data to be encoded in the JWT
+            $secretKey, // The signing key
+            'HS512'     // Algorithm used to sign the token, see https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40#section-3
+        );
+        $data = array('token'=>$jwt);
+        return $data;
+     }
+     
+     protected function jwtdec($jwt)
+     {
+        $secretKey = 'IUYFGIUTJUgiyutriugjhgf';
+        $token = JWT::decode($jwt, $secretKey, array('HS512'));
+        $token = get_object_vars($token);
+        $payload = get_object_vars($token['data']);
+        
+        return $payload;
+     }
+     
+     protected function auth(){
+        $req = json_decode($this->file,true);
+        $jwt = $req['token'];
+        $payload = $this->jwtdec($jwt);
+        $user = $payload['email'];
+        $cmj = $payload['cmj'];
+        $pass = $payload['password'];
+        $this->log->logDebug("User:". $user ." CMJ:". $cmj ."  Pass: ". $pass);
+        $stmt=$this->db->prepare("select user.id, cmj.cod_cmj from user inner join cmj on user.cmj=cmj.id_cmj where user.email=? and cmj.cod_cmj=? and user.parola=?");
+        try{
+            $stmt->execute(array($user, $cmj, $pass));
+        }
+        catch (PDOException $e)
+        {    
+            $this->log->LogDebug("DB ERROR: ".$e->getMessage());
+            return $this->jwtenc('01','DB ERROR');
+        }
+        if ($stmt->rowCount() == 0)
+        {
+            $this->log->LogDebug("Autentificare eronata.");
+           return $this->jwtenc('10','Auth error');
+        }
+        else
+        {
+            $this->log->LogDebug("Autentificare reusita.");
+
+            try{
+                $dt=date("H:i:s");
+                $tt=$user.$dt;
+                $token=md5($tt);
+                $stmt=$this->db->query("insert into token (token,user) values ('".$token."','".$user."')");
+            }
+            catch (PDOException $e)
+            {
+                return $this->jwtenc('01','DB ERROR');
+            }
+            
+            $raspuns = $this->jwtenc('00','Autentificare reusita',$token);
+            return $raspuns;
+        }
+     }
+    
+    // Logout  
+/*    public function logout(){  
+              $this->_post = array('action' => 'logout');  
+              $this->_qurl = 'api/2.0/fo/session/';  
+              $this->_common_curl();  
+              $this->_is_logged = false;  
+              unlink($this->_ckfile);  
+    }   */
+     
+ }
+?>
