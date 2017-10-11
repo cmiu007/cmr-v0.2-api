@@ -1338,7 +1338,7 @@ class MyApi extends Api
                 $this->log->logDebug("Lista dlp pentru ".$id.":");
                 $ll = print_r($this->payload, true);
                 $this->log->logDebug("Payload: ".$ll);
-                $query = "select * from mem_dlp where id_mem ='".$id."' order by id_data_start desc";
+                $query = "select * from mem_dlp where id_mem ='".$id."' order by dlp_data_start desc";
                 try{
                     $stmt = $this->db->query($query);
                 }
