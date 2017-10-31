@@ -24,7 +24,7 @@
     
     public function __construct() {
         try {
-        $this->_connection = new PDO ('mysql:host=localhost;dbname=cmr;charset=utf8', 'cmr', 'WirelessDe', array(PDO::ATTR_EMULATE_PREPARES => false, 
+        $this->_connection = new PDO ('mysql:host=localhost;dbname=cmr_test02;charset=utf8', 'cmr', 'WirelessDe', array(PDO::ATTR_EMULATE_PREPARES => false, 
                                                                                                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
         }
         catch (PDOException $e)

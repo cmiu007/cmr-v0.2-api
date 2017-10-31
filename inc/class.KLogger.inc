@@ -31,7 +31,7 @@
 		
 		/* Public members: Not so much of an example of encapsulation, but that's okay. */
 		public $Log_Status 	= KLogger::LOG_CLOSED;
-		public $DateFormat	= "Y-m-d G:i:s";
+		public $DateFormat	= "d-m-Y G:i:s";
 		public $MessageQueue;
 	
 		private $log_file;
@@ -67,6 +67,8 @@
 				$this->Log_Status = KLogger::OPEN_FAILED;
 				$this->MessageQueue[] = "The file could not be opened. Check permissions.";
 			}
+			
+			//$this->WriteFreeFormLine ( "Constructor: $priority --- ".$this->priority."$line \n" );
 			
 			return;
 		}
@@ -104,6 +106,7 @@
 		
 		public function Log($line, $priority)
 		{
+			//$this->WriteFreeFormLine ( "$priority --- ".$this->priority."$line \n" );
 			if ( $this->priority <= $priority )
 			{
 				$status = $this->getTimeLine( $priority );

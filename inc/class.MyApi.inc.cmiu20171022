@@ -458,19 +458,13 @@ class MyApi extends Api
                 $certificat = $row['id_certificat'];
                 
                 $cp = array_values($dlp);
-                $cp[5] = $certificat;
+                $cp[4] = $certificat;
                 $ll = print_r($cp, true);
                 $this->log->logDebug("Payload dlp: ".$ll);
                 
-  	        // $query = "insert into mem_dlp (id_mem, dlp_data_start, dlp_data_end, status, id_certificat) values (?,?,?,?,?)";
-		// de pus inchis cf:
-    		// - 1 pt dlp tip A
-    		// - 2 pt dlp tip B - Medic cu competente limitate
-    		// - 3 pt dlp tip B - Medic Rezident
-    		// - 4 pt dlp tip C
-    		// - 11 pt dlp tip vechi, versiune 1
-		$query = "insert into mem_dlp (id_mem, tip, dlp_data_start, dlp_data_end, status, id_certificat) values (?,?,?,?,?,?)";
-		$stmt = $this->db->prepare($query);
+                $query = "insert into mem_dlp (id_mem, dlp_data_start, dlp_data_end, status, id_certificat) values (?,?,?,?,?)";
+                
+                $stmt = $this->db->prepare($query);
                 
                 try{
                     $stmt->execute($cp);
@@ -772,15 +766,8 @@ class MyApi extends Api
                         $this->log->LogError("DB ERROR: ".$e->getMessage());
                         return(array('result' => '01' , 'mesaj' => $e->getMessage()));
                     }
-                    if ($stmt->rowCount() > 0)
-                    {
-                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $date_vechi = implode(',',$row);
-                    }
-                    else
-                    {
-                        return(array('result'=>'15', 'mesaj'=>'CPP-ul cu id-ul '.$id. ' nu exista.'));
-                    }
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $date_vechi = implode(',',$row);
                     $date_noi = implode(',',$cpp);
                     $actiune = 'Date anterioare: ';
                     $actiune .= $date_vechi;
@@ -788,18 +775,18 @@ class MyApi extends Api
                     $actiune .= $date_noi;
                     $query = 'update mem_cpp set ';
                     $data = array();
-                    if (isset($cpp['reg_cpp_tip_id'])) { $query .= "reg_cpp_tip_id=?, "; $data[] = $cpp['reg_cpp_tip_id']; }
-                    if (isset($cpp['reg_cpp_id'])) { $query .= "reg_cpp_id=?, "; $data[] = $cpp['reg_cpp_id']; }
-                    if (isset($cpp['grad_prof_cpp_id'])) { $query .= "grad_prof_cpp_id=?, "; $data[] = $cpp['grad_prof_cpp_id']; }
-                    if (isset($cpp['date_start'])) { $query .= "date_start=?, "; $data[] = $cpp['date_start']; }
-                    if (isset($cpp['date_end'])) { $query .= "date_end=?, "; $data[] = $cpp['date_end']; }
-                    if (isset($cpp['emitent'])) { $query .= "emitent=?, "; $data[] = $cpp['emitent']; }
-                    if (isset($cpp['act_serie'])) { $query .= "act_serie=?, "; $data[] = $cpp['act_serie']; }
-                    if (isset($cpp['act_numar'])) { $query .= "act_numar=?, "; $data[] = $cpp['act_numar']; }
-                    if (isset($cpp['act_data'])) { $query .= "act_data=?, "; $data[] = $cpp['act_data']; }
-                    if (isset($cpp['act_descriere'])) { $query .= "act_descriere=?, "; $data[] = $cpp['act_descriere']; }
-                    if (isset($cpp['date_start'])) { $query .= "date_start=?, "; $data[] = $cpp['date_start']; }
-                    if (isset($cpp['date_end'])) { $query .= "date_end=?, "; $data[] = $cpp['date_end']; }
+                    if ($cpp['reg_cpp_tip_id'] != "") { $query .= "reg_cpp_tip_id=?, "; $data[] = $cpp['reg_cpp_tip_id']; }
+                    if ($cpp['reg_cpp_id'] != "") { $query .= "reg_cpp_id=?, "; $data[] = $cpp['reg_cpp_id']; }
+                    if ($cpp['grad_prof_cpp_id'] != "") { $query .= "grad_prof_cpp_id=?, "; $data[] = $cpp['grad_prof_cpp_id']; }
+                    if ($cpp['date_start'] != "") { $query .= "date_start=?, "; $data[] = $cpp['date_start']; }
+                    if ($cpp['date_end'] != "") { $query .= "date_end=?, "; $data[] = $cpp['date_end']; }
+                    if ($cpp['emitent'] != "") { $query .= "emitent=?, "; $data[] = $cpp['emitent']; }
+                    if ($cpp['act_serie'] != "") { $query .= "act_serie=?, "; $data[] = $cpp['act_serie']; }
+                    if ($cpp['act_numar'] != "") { $query .= "act_numar=?, "; $data[] = $cpp['act_numar']; }
+                    if ($cpp['act_data'] != "") { $query .= "act_data=?, "; $data[] = $cpp['act_data']; }
+                    if ($cpp['act_descriere'] != "") { $query .= "act_descriere=?, "; $data[] = $cpp['act_descriere']; }
+                    if ($cpp['date_start'] != "") { $query .= "date_start=?, "; $data[] = $cpp['date_start']; }
+                    if ($cpp['date_end'] != "") { $query .= "date_end=?, "; $data[] = $cpp['date_end']; }
                     $query .= 'obs=? where id_cpp = ?';
                     $data[] = $cpp['obs'];
                     $stmt = $this->db->prepare($query);
@@ -948,9 +935,8 @@ class MyApi extends Api
                     $actiune .= $date_vechi;
                     $actiune .= '\nDate modificate: ';
                     $actiune .= $date_noi;
-		    // verificare data_end si daca nu este
-		    //  $query = "update mem_dlp set dlp_data_start=?, dlp_data_end=?, status=? where id_dlp=?"; 
-                    $query = "update mem_dlp set tip=?, dlp_data_start=?, dlp_data_end=?, status=? where id_dlp=?";
+                    // verificare data_end si daca nu este 
+                    $query = "update mem_dlp set dlp_data_start=?, dlp_data_end=?, status=? where id_dlp=?";
                     $medic=array_shift($dlp);
                     $stmt = $this->db->prepare($query);
                     $dlp[] = $id;
@@ -1028,7 +1014,7 @@ class MyApi extends Api
                     $actiune .= '\nDate modificate: ';
                     $actiune .= $date_noi;
                     // verificare data_end si daca nu este 
-                    $query = "update mem_titlu set data_start=?, data_stop=?, status=? where id_titlu=?";
+                    $query = "update mem_titlu set dlp_data_start=?, dlp_data_end=?, status=? where id_dlp=?";
                     $medic=array_shift($dlp);
                     $stmt = $this->db->prepare($query);
                     $dlp[] = $id;
@@ -1041,15 +1027,15 @@ class MyApi extends Api
                         return ($data);
                     }
                     $cand = date("Y-m-d h:i");
-                    $query = 'insert into log (cine, id_med, cand, actiune, data, ip) values ("'.$this->User.'","'.$medic.'","'.$cand.'","Modificare titlu ","'.$actiune.'","")';
+                    $query = 'insert into log (cine, id_med, cand, actiune, data, ip) values ("'.$this->User.'","'.$medic.'","'.$cand.'","Modificare dlp ","'.$actiune.'","")';
                     try{ $stmt = $this->db->query($query); }
                     catch (Exception $e){
                         $this->log->LogError("DB ERROR: ".$e->getMessage());
                         $data = array('result' => '01' , 'mesaj' => $e->getMessage());
                         return ($data);
                     }
-                    $result=array('result'=>'00', 'mesaj'=>'Modificare titlu cu succes');
-                    $this->log->logDebug("Modificare titlu cu succes");
+                    $result=array('result'=>'00', 'mesaj'=>'Modificare dlp cu succes');
+                    $this->log->logDebug("Modificare dlp cu succes");
                     return($result); 
                 }
                 break;
@@ -1069,7 +1055,7 @@ class MyApi extends Api
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     $date_vechi = implode(',',$row);
                     // warning 
-                    $date_noi = implode(',',$cmj);
+                    $date_noi = implode(',',$dlp);
                     $actiune = 'Date anterioare: ';
                     $actiune .= $date_vechi;
                     $actiune .= '\nDate modificate: ';
@@ -1285,7 +1271,7 @@ class MyApi extends Api
                 $this->log->logDebug("Get CMJ:");
                 $id = $this -> payload['id'];
                 try{
-					$stmt = $this->db->query("select * from reg_cmj where id_reg_jud = '".$id."'");
+					$stmt = $this->db->query("select * from reg_cmj where id_cmj = '".$id."'");
 				}
 				catch (Exception $e){
                     $this->log->LogError("DB ERROR: ".$e->getMessage());
@@ -1532,13 +1518,7 @@ class MyApi extends Api
                 $this->log->logDebug("Lista dlp pentru ".$id.":");
                 $ll = print_r($this->payload, true);
                 $this->log->logDebug("Payload: ".$ll);
-                
-                if (isset($this->payload['cert']))
-                    $query = "select * from mem_dlp where id_mem ='".$id."' and id_certificat='".$this->payload['cert']."' order by dlp_data_start asc";
-                else
-                    $query = "select * from mem_dlp where id_mem ='".$id."' order by dlp_data_start asc";
-                
-                
+                $query = "select * from mem_dlp where id_mem ='".$id."' order by dlp_data_start asc";
                 try{
                     $stmt = $this->db->query($query);
                 }
@@ -1581,34 +1561,7 @@ class MyApi extends Api
                 //$this->log->logDebug($ll);
                 return $raspuns;
             }
-	    break;
-
-            case "titlu":
-            {
-                $id = $this->payload['id'];
-                $this->log->logDebug("Lista titluri pentru ".$id.":");
-                $ll = print_r($this->payload, true);
-                $this->log->logDebug("Payload: ".$ll);
-                $query = "select * from mem_titlu where id_mem ='".$id."' order by id_titlu desc";
-                try{
-                    $stmt = $this->db->query($query);
-                }
-                catch (PDOException $e){
-                    $this->log->LogError("DB ERROR: ".$e->getMessage());
-                    $data = array('result' => '01' , 'mesaj' => $e->getMessage());
-                    return ($data);
-                }
-                $raspuns=array();
-                while($row = $stmt->fetch(PDO::FETCH_ASSOC))
-                {
-                    $raspuns[]=$row;
-                }
-                //$ll = print_r($raspuns,true);
-                //$this->log->logDebug($ll);
-                return $raspuns;
-            }
-	    break;
-
+            break;
             case "cmj":
             {
                 //$id = $this->payload['id'];
@@ -2132,89 +2085,6 @@ class MyApi extends Api
         return $certificat;
     }
     
-    protected function getaviz(){
-        $this->log->LogDebug("Get avizare.");
-        if ($this->raspuns != "") return $this->raspuns;
-        $ll=print_r($this->payload, true);
-        $this->log->logDebug("Row: ".$ll);
-        
-        $id=$this->payload['id'];
-        $query = "select * from mem_certificat where id_certificat = '".$id."'";
-        try{
-            $stmt = $this->db->query($query);
-        } 
-        catch(Exception $e){
-            $this->log->LogError("DB ERROR: ".$e->getMessage());
-            $data = array('result' => '01' , 'mesaj' => $e->getMessage());
-            return ($data);
-        }    
-        $certificat = $stmt->fetch();
-        $query = "select * from mem where id_mem = '".$certificat['id_mem']."'";
-        try{
-            $stmt = $this->db->query($query);
-        } 
-        catch(Exception $e){
-            $this->log->LogError("DB ERROR: ".$e->getMessage());
-            $data = array('result' => '01' , 'mesaj' => $e->getMessage());
-            return ($data);
-        }    
-        $medic = $stmt->fetch();
-        
-        $query = 'select distinct reg_cpp_grup.nume_cpp_grup
-            from mem_dlp inner join mem_asig on mem_asig.id_dlp=mem_dlp.id_dlp
-            inner join reg_asigurator on mem_asig.id_asigurator=reg_asigurator.id_asigurator
-            inner join mem_cpp on mem_cpp.id_cpp=mem_asig.id_cpp
-            inner join reg_cpp on reg_cpp.id_cpp=mem_cpp.reg_cpp_id
-            inner join reg_cpp_grup on reg_cpp.grp_cpp=reg_cpp_grup.id_grup_cpp 
-            where mem_dlp.id_certificat = "'.$id.'"';
-        try{
-            $stmt = $this->db->query($query);
-        } 
-        catch(Exception $e){
-            $this->log->LogError("DB ERROR: ".$e->getMessage());
-            $data = array('result' => '01' , 'mesaj' => $e->getMessage());
-            return ($data);
-        }
-        
-        $grup=array();
-        while ($row = $stmt->fetch())
-        {
-            $ll=print_r($row, true);
-            $this->log->logDebug("Row: ".$ll);
-            
-            $query = 'select mem_asig.data_start, mem_asig.data_end, mem_asig.polita_serie, mem_asig.polita_nr, reg_asigurator.nume_asigurator, mem_cpp.id_cpp,
-                reg_cpp.nume_cpp, reg_cpp_grup.nume_cpp_grup, reg_gr_prof.nume_gr_prof, reg_tip_avizare.nume_tip_avizare
-                from mem_asig left join mem_dlp on mem_asig.id_dlp=mem_dlp.id_dlp
-                inner join reg_asigurator on mem_asig.id_asigurator=reg_asigurator.id_asigurator
-                inner join mem_cpp on mem_cpp.id_cpp=mem_asig.id_cpp
-                inner join reg_cpp on reg_cpp.id_cpp=mem_cpp.reg_cpp_id
-                inner join reg_gr_prof on reg_gr_prof.id_gr_prof=mem_cpp.grad_prof_cpp_id
-                inner join reg_cpp_grup on reg_cpp.grp_cpp=reg_cpp_grup.id_grup_cpp
-                inner join reg_tip_avizare on reg_tip_avizare.id_tip_avizare = mem_asig.tip
-                where mem_dlp.id_certificat = "'.$id.'" and reg_cpp_grup.nume_cpp_grup = "'.$row['nume_cpp_grup'].'"';
-            try{
-                $st = $this->db->query($query);
-            } 
-            catch(Exception $e){
-                $this->log->LogError("DB ERROR: ".$e->getMessage());
-                $data = array('result' => '01' , 'mesaj' => $e->getMessage());
-                return ($data);
-            }
-            $specialitati=array();
-            while ($rezultat = $st->fetch()){
-            $specialitati[] = $rezultat;
-            $ll=print_r($rezultat, true);
-            $this->log->logDebug("Row: ".$ll);
-            }
-            $grup[]=array('grup' => $row['nume_cpp_grup'], 'data' => $specialitati);
-
-        }
-        $ll=print_r($grup, true);
-        $this->log->logDebug("Row: ".$ll);
-        return $grup;
-    
-    }
-    
     
      /*************
       *
@@ -2226,7 +2096,6 @@ class MyApi extends Api
       */
      
     protected function auth(){
-        
         $user = $this->payload['email'];
         $pass = $this->payload['password'];
         $stmt=$this->db->prepare("select user.id, user.nume, user.cmj, reg_jud.cod_cmj as judet from user inner join reg_jud on user.cmj=reg_jud.id_cmj where user.email=? and user.parola=?");
@@ -2279,7 +2148,8 @@ class MyApi extends Api
       * Functii GET pentru citirea datelor publice (judete, specialitati medicale, etc)
       *
       */
-    protected function asig_nume(){
+     protected function asig_nume()
+     {
         $ll = print_r($this->payload, true);
         $this->log->logDebug("Payload: ".$ll);
         $id = $this->payload['id'];
@@ -2509,14 +2379,8 @@ class MyApi extends Api
     }    
 
     protected function jud(){
-        $this->log->logDebug("Listare judete");
-        if (isset($this->payload['jud_id']))
-            $query = "select id_cmj as id, nume_cmj as nume from reg_jud where id_cmj = '".$this->payload['jud_id']."'";
-        else
-            $query = "select id_cmj as id, nume_cmj as nume from reg_jud";
-        
         try{
-            $stmt = $this->db->query($query);
+        $stmt = $this->db->query("select id_cmj as id, nume_cmj as nume from reg_jud");
         }
         catch (PDOException $e)
         {
